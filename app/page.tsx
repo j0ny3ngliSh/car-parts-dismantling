@@ -1,69 +1,8 @@
 "use client";
 
 import { useState } from "react";
-
-const piese = [
-  {
-    id: "bmw-001",
-    nume: "Far LED Adaptiv",
-    model_bmw: "G30",
-    pret: 1850,
-    descriere:
-      "Far stânga LED adaptiv original BMW Seria 5 G30 (2017-2023). Stare excelentă, fără fisuri sau defecte. Include cablaj și modul de control.",
-    imagine_placeholder:
-      "https://placehold.co/400x260/1a1a2e/e2b96f?text=Far+LED+G30",
-    stare: "Foarte bună",
-    km: 62000,
-  },
-  {
-    id: "bmw-002",
-    nume: "Motor Diesel N57",
-    model_bmw: "F10",
-    pret: 8500,
-    descriere:
-      "Motor complet N57D30A 3.0d 258CP extras din BMW Seria 5 F10 xDrive. 112.000 km reali, verificabili. Include toate anexele. Garanție 60 zile.",
-    imagine_placeholder:
-      "https://placehold.co/400x260/1a1a2e/e2b96f?text=Motor+N57+F10",
-    stare: "Bună",
-    km: 112000,
-  },
-  {
-    id: "bmw-003",
-    nume: "Volan M-Sport cu padele",
-    model_bmw: "F30",
-    pret: 950,
-    descriere:
-      "Volan M-Sport original cu padele schimbător de viteze și butoane multifuncționale. Alcantara și piele fină. Potrivit pentru F30, F31, F34.",
-    imagine_placeholder:
-      "https://placehold.co/400x260/1a1a2e/e2b96f?text=Volan+M-Sport+F30",
-    stare: "Excelentă",
-    km: 45000,
-  },
-  {
-    id: "bmw-004",
-    nume: "Cutie Automată ZF 8HP",
-    model_bmw: "G01",
-    pret: 4200,
-    descriere:
-      "Cutie de viteze automată ZF 8HP50 extrasă din BMW X3 G01 xDrive30d. Funcționează perfect, fără erori. Pregătită pentru instalare imediată.",
-    imagine_placeholder:
-      "https://placehold.co/400x260/1a1a2e/e2b96f?text=Cutie+ZF+8HP+G01",
-    stare: "Bună",
-    km: 89000,
-  },
-  {
-    id: "bmw-005",
-    nume: "Hayon cu sticlă panoramică",
-    model_bmw: "F11",
-    pret: 1200,
-    descriere:
-      "Hayon complet BMW Seria 5 F11 Touring în culoarea Alpinweiß (A96). Fără lovituri sau rugină. Include motoare electrice, broască și cablaj.",
-    imagine_placeholder:
-      "https://placehold.co/400x260/1a1a2e/e2b96f?text=Hayon+F11+Touring",
-    stare: "Bună",
-    km: 134000,
-  },
-];
+import { PiesaCard } from "@/components/PiesaCard";
+import { piese } from "@/lib/piese";
 
 const modele = ["Toate", ...Array.from(new Set(piese.map((p) => p.model_bmw)))];
 
@@ -190,81 +129,7 @@ export default function Page() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {pieseVizibile.map((piesa) => (
-              <article
-                key={piesa.id}
-                className="group flex flex-col rounded-2xl border border-white/10 bg-white/[0.03] hover:border-[#e2b96f]/40 hover:bg-white/[0.06] transition-all duration-300 overflow-hidden"
-              >
-                {/* Image */}
-                <div className="relative overflow-hidden">
-                  <img
-                    src={piesa.imagine_placeholder}
-                    alt={piesa.nume}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  {/* Model badge */}
-                  <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-[#0d0d14]/80 backdrop-blur-sm text-[#e2b96f] text-xs font-black tracking-widest border border-[#e2b96f]/30">
-                    {piesa.model_bmw}
-                  </span>
-                </div>
-
-                {/* Content */}
-                <div className="flex flex-col flex-1 p-5">
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <h2 className="text-base font-bold text-white leading-snug">
-                      {piesa.nume}
-                    </h2>
-                    <span
-                      className={`shrink-0 px-2.5 py-1 rounded-md text-xs font-semibold ${
-                        stareColor[piesa.stare] ??
-                        "bg-white/10 text-white/60 border border-white/20"
-                      }`}
-                    >
-                      {piesa.stare}
-                    </span>
-                  </div>
-
-                  <p className="text-sm text-white/50 leading-relaxed mb-4 flex-1">
-                    {piesa.descriere}
-                  </p>
-
-                  {/* Meta */}
-                  <div className="flex items-center gap-3 text-xs text-white/30 mb-4">
-                    <span className="flex items-center gap-1">
-                      <svg
-                        className="w-3 h-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13 10V3L4 14h7v7l9-11h-7z"
-                        />
-                      </svg>
-                      {piesa.km.toLocaleString("ro-RO")} km
-                    </span>
-                    <span>•</span>
-                    <span>Cod: {piesa.id.toUpperCase()}</span>
-                  </div>
-
-                  {/* Price + CTA */}
-                  <div className="flex items-center justify-between border-t border-white/10 pt-4">
-                    <div>
-                      <p className="text-xs text-white/30 mb-0.5">Preț</p>
-                      <p className="text-xl font-black text-[#e2b96f]">
-                        {piesa.pret.toLocaleString("ro-RO")} lei
-                      </p>
-                    </div>
-                    <button className="px-4 py-2 rounded-xl bg-[#e2b96f] text-[#0d0d14] text-sm font-bold hover:bg-[#f0cc84] active:scale-95 transition-all">
-                      Contactează
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))}
+            {pieseVizibile.map((p) => <PiesaCard key={p.id} piesa={p} />)}
           </div>
         )}
       </section>

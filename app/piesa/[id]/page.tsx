@@ -1,285 +1,251 @@
-"use client";
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { getPiesaById, piese } from "@/lib/piese";
 
-import { useState } from "react";
+// ── Numărul tău de WhatsApp (format internațional, doar cifre pentru link) ──
+const WHATSAPP_NR = "37369380937";
 
-const piese = [
-  {
-    id: "bmw-001",
-    nume: "Far LED Adaptiv",
-    model_bmw: "G30",
-    pret: 1850,
-    descriere:
-      "Far stânga LED adaptiv original BMW Seria 5 G30 (2017-2023). Stare excelentă, fără fisuri sau defecte. Include cablaj și modul de control.",
-    imagine_placeholder:
-      "https://placehold.co/400x260/1a1a2e/e2b96f?text=Far+LED+G30",
-    stare: "Foarte bună",
-    km: 62000,
-  },
-  {
-    id: "bmw-002",
-    nume: "Motor Diesel N57",
-    model_bmw: "F10",
-    pret: 8500,
-    descriere:
-      "Motor complet N57D30A 3.0d 258CP extras din BMW Seria 5 F10 xDrive. 112.000 km reali, verificabili. Include toate anexele. Garanție 60 zile.",
-    imagine_placeholder:
-      "https://placehold.co/400x260/1a1a2e/e2b96f?text=Motor+N57+F10",
-    stare: "Bună",
-    km: 112000,
-  },
-  {
-    id: "bmw-003",
-    nume: "Volan M-Sport cu padele",
-    model_bmw: "F30",
-    pret: 950,
-    descriere:
-      "Volan M-Sport original cu padele schimbător de viteze și butoane multifuncționale. Alcantara și piele fină. Potrivit pentru F30, F31, F34.",
-    imagine_placeholder:
-      "https://placehold.co/400x260/1a1a2e/e2b96f?text=Volan+M-Sport+F30",
-    stare: "Excelentă",
-    km: 45000,
-  },
-  {
-    id: "bmw-004",
-    nume: "Cutie Automată ZF 8HP",
-    model_bmw: "G01",
-    pret: 4200,
-    descriere:
-      "Cutie de viteze automată ZF 8HP50 extrasă din BMW X3 G01 xDrive30d. Funcționează perfect, fără erori. Pregătită pentru instalare imediată.",
-    imagine_placeholder:
-      "https://placehold.co/400x260/1a1a2e/e2b96f?text=Cutie+ZF+8HP+G01",
-    stare: "Bună",
-    km: 89000,
-  },
-  {
-    id: "bmw-005",
-    nume: "Hayon cu sticlă panoramică",
-    model_bmw: "F11",
-    pret: 1200,
-    descriere:
-      "Hayon complet BMW Seria 5 F11 Touring în culoarea Alpinweiß (A96). Fără lovituri sau rugină. Include motoare electrice, broască și cablaj.",
-    imagine_placeholder:
-      "https://placehold.co/400x260/1a1a2e/e2b96f?text=Hayon+F11+Touring",
-    stare: "Bună",
-    km: 134000,
-  },
-];
+// ── Generare rute statice ────────────────────────────────────
+export async function generateStaticParams() {
+  return piese.map((p) => ({ id: p.id }));
+}
 
-const modele = ["Toate", ...Array.from(new Set(piese.map((p) => p.model_bmw)))];
+// ── Metadata dinamică (Corectat pentru Next.js 15) ──────────
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const piesa = getPiesaById(id);
+  if (!piesa) return { title: "Piesă negăsită" };
+  return {
+    title: `${piesa.nume} ${piesa.model_bmw} – BMW Dezmembrări`,
+    description: piesa.descriere,
+  };
+}
 
-const stareColor: Record<string, string> = {
-  Excelentă: "bg-emerald-900/60 text-emerald-300 border border-emerald-700",
-  "Foarte bună": "bg-blue-900/60 text-blue-300 border border-blue-700",
-  Bună: "bg-yellow-900/60 text-yellow-300 border border-yellow-700",
+// ── Badge culori ─────────────────────────────────────────────
+const stareStyle: Record<string, string> = {
+  Excelentă:
+    "bg-emerald-900/50 text-emerald-300 border border-emerald-700/60",
+  "Foarte bună": "bg-blue-900/50 text-blue-300 border border-blue-700/60",
+  Bună: "bg-amber-900/50 text-amber-300 border border-amber-700/60",
 };
 
-export default function Page() {
-  const [filtru, setFiltru] = useState("Toate");
-  const [sortare, setSortare] = useState("default");
+// ── Componentă rând detaliu ───────────────────────────────────
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start gap-4 py-3 border-b border-white/[0.07] last:border-0">
+      <span className="w-36 shrink-0 text-xs font-semibold uppercase tracking-wider text-white/35">
+        {label}
+      </span>
+      <span className="text-sm text-white/80 leading-relaxed">{value}</span>
+    </div>
+  );
+}
 
-  const pieseVizibile = piese
-    .filter((p) => filtru === "Toate" || p.model_bmw === filtru)
-    .sort((a, b) => {
-      if (sortare === "pret-asc") return a.pret - b.pret;
-      if (sortare === "pret-desc") return b.pret - a.pret;
-      return 0;
-    });
+// ── Pagina principală (Asincronă pentru a rezolva eroarea params) ──
+export default async function PiesaPage({ params }: { params: Promise<{ id: string }> }) {
+  // Așteptăm rezolvarea Promise-ului params
+  const { id } = await params;
+  
+  const piesa = getPiesaById(id);
+  if (!piesa) notFound();
+
+  const { detalii } = piesa;
+
+  // Mesaj pre-completat WhatsApp
+  const mesajWA = encodeURIComponent(
+    `Bună ziua! Sunt interesat de piesa *${piesa.nume}* (${piesa.model_bmw}) – cod ${piesa.id.toUpperCase()}. ` +
+      `Preț afișat: ${piesa.pret.toLocaleString("ro-RO")} lei. Puteți da mai multe detalii?`
+  );
+  const whatsappUrl = `https://wa.me/${WHATSAPP_NR}?text=${mesajWA}`;
 
   return (
     <main className="min-h-screen bg-[#0d0d14] text-white font-sans">
-      {/* Header */}
-      <header className="border-b border-white/10 bg-[#0d0d14]/80 backdrop-blur-md sticky top-0 z-20">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl font-black tracking-tight text-[#e2b96f]">
-              BMW
-            </span>
-            <span className="text-sm font-medium text-white/40 uppercase tracking-widest border-l border-white/20 pl-3">
+      {/* ── Header ────────────────────────────────── */}
+      <header className="sticky top-0 z-20 border-b border-white/10 bg-[#0d0d14]/80 backdrop-blur-md">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3 group">
+            <span className="text-xl font-black text-[#e2b96f]">BMW</span>
+            <span className="text-xs font-semibold text-white/35 uppercase tracking-widest border-l border-white/20 pl-3 group-hover:text-white/60 transition-colors">
               Dezmembrări Premium
             </span>
-          </div>
-          <a
-            href="tel:+37369380937"
-            className="text-sm text-[#e2b96f] font-medium hover:underline"
+          </Link>
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-xs text-white/40 hover:text-white transition-colors"
           >
-            +373 69 38 09 37
-          </a>
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Înapoi la catalog
+          </Link>
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="max-w-6xl mx-auto px-4 pt-14 pb-10">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#e2b96f] mb-3">
-          Piese originale verificate
-        </p>
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white leading-tight mb-4">
-          Piese BMW de calitate,
-          <br />
-          <span className="text-[#e2b96f]">prețuri corecte.</span>
-        </h1>
-        <p className="text-white/50 text-base max-w-lg">
-          Stoc permanent de piese originale extrase din vehicule accidentate sau
-          uzate. Garanție pe fiecare piesă, livrare rapidă.
-        </p>
-      </section>
+      <div className="max-w-5xl mx-auto px-4 py-10">
+        {/* ── Breadcrumb ─────────────────────────── */}
+        <nav className="flex items-center gap-2 text-xs text-white/30 mb-8">
+          <Link href="/" className="hover:text-[#e2b96f] transition-colors">Catalog</Link>
+          <span>/</span>
+          <span className="text-[#e2b96f]">{piesa.detalii.categorie}</span>
+          <span>/</span>
+          <span className="text-white/50">{piesa.nume}</span>
+        </nav>
 
-      {/* Filter Bar */}
-      <section className="max-w-6xl mx-auto px-4 pb-8">
-        <div className="flex flex-wrap items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10">
-          {/* Model Filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-white/40 uppercase tracking-widest font-semibold">
-              Model
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {modele.map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setFiltru(m)}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all border ${
-                    filtru === m
-                      ? "bg-[#e2b96f] text-[#0d0d14] border-[#e2b96f]"
-                      : "bg-transparent text-white/50 border-white/15 hover:border-white/30 hover:text-white"
-                  }`}
-                >
-                  {m}
-                </button>
-              ))}
+        {/* ── Layout principal ───────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
+          {/* Coloana stângă */}
+          <div>
+            {/* Imagine */}
+            <div className="relative rounded-2xl overflow-hidden border border-white/10 mb-8">
+              <img
+                src={piesa.imagine_placeholder}
+                alt={piesa.nume}
+                className="w-full object-cover h-72 lg:h-[380px]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d14]/80 via-transparent to-transparent" />
+              
+              <div className="absolute top-4 left-4 flex gap-2">
+                <span className="px-3 py-1.5 rounded-lg bg-[#0d0d14]/85 backdrop-blur-sm text-[#e2b96f] text-xs font-black tracking-widest border border-[#e2b96f]/30">
+                  {piesa.model_bmw}
+                </span>
+                <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold backdrop-blur-sm ${stareStyle[piesa.stare]}`}>
+                  {piesa.stare}
+                </span>
+              </div>
+              <div className="absolute bottom-4 left-4">
+                <p className="text-xs text-white/40 mb-0.5">Cod intern</p>
+                <p className="text-sm font-mono font-bold text-white/70">{piesa.id.toUpperCase()}</p>
+              </div>
             </div>
+
+            {/* Titlu + descriere */}
+            <div className="mb-8">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#e2b96f] mb-2">
+                {detalii.categorie}
+              </p>
+              <h1 className="text-3xl lg:text-4xl font-black tracking-tight text-white mb-4 leading-tight">
+                {piesa.nume}
+              </h1>
+              <p className="text-base text-white/55 leading-relaxed">
+                {piesa.descriere}
+              </p>
+            </div>
+
+            {/* Specificații tehnice */}
+            <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 mb-6">
+              <h2 className="text-sm font-black uppercase tracking-widest text-white/40 mb-5">
+                Specificații tehnice
+              </h2>
+              {detalii.cod_oem && <Row label="Cod OEM" value={detalii.cod_oem} />}
+              {detalii.culoare && <Row label="Culoare" value={detalii.culoare} />}
+              {detalii.an_fabricatie && <Row label="An fabricație" value={detalii.an_fabricatie} />}
+              <Row label="Kilometraj" value={`${piesa.km.toLocaleString("ro-RO")} km`} />
+              <Row label="Stare" value={piesa.stare} />
+              <Row label="Garanție" value={detalii.garantie} />
+              <Row label="Categorie" value={detalii.categorie} />
+            </section>
+
+            {/* Compatibilitate */}
+            <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 mb-6">
+              <h2 className="text-sm font-black uppercase tracking-widest text-white/40 mb-5">
+                Compatibil cu
+              </h2>
+              <ul className="space-y-2">
+                {detalii.compatibil_cu.map((c, i) => (
+                  <li key={i} className="flex items-start gap-3 text-sm text-white/65">
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#e2b96f] shrink-0" />
+                    {c}
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            {/* Observații */}
+            {detalii.extras && (
+              <section className="rounded-2xl border border-amber-800/40 bg-amber-900/10 p-6">
+                <h2 className="text-sm font-black uppercase tracking-widest text-amber-400/70 mb-3">
+                  Observații importante
+                </h2>
+                <p className="text-sm text-amber-200/70 leading-relaxed">{detalii.extras}</p>
+              </section>
+            )}
           </div>
 
-          {/* Divider */}
-          <div className="h-6 w-px bg-white/10 mx-1 hidden sm:block" />
+          {/* ── Coloana dreaptă – sticky card ─────── */}
+          <aside className="lg:sticky lg:top-24 h-fit">
+            <div className="rounded-2xl border border-white/12 bg-white/[0.04] p-6">
+              {/* Preț */}
+              <div className="mb-6">
+                <p className="text-xs text-white/35 uppercase tracking-widest mb-1">Preț</p>
+                <p className="text-4xl font-black text-[#e2b96f] leading-none">
+                  {piesa.pret.toLocaleString("ro-RO")}
+                  <span className="text-xl font-semibold ml-2 text-[#e2b96f]/70">lei</span>
+                </p>
+                <p className="text-xs text-white/30 mt-2">TVA inclus · Preț negociabil</p>
+              </div>
 
-          {/* Sort */}
-          <div className="flex items-center gap-2 ml-auto">
-            <span className="text-xs text-white/40 uppercase tracking-widest font-semibold">
-              Sortare
-            </span>
-            <select
-              value={sortare}
-              onChange={(e) => setSortare(e.target.value)}
-              className="bg-white/5 border border-white/15 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#e2b96f]/60 appearance-none cursor-pointer"
-            >
-              <option value="default">Implicit</option>
-              <option value="pret-asc">Preț crescător</option>
-              <option value="pret-desc">Preț descrescător</option>
-            </select>
-          </div>
-        </div>
+              {/* Stats rapide */}
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                {[
+                  { label: "Model", value: piesa.model_bmw },
+                  { label: "Km", value: `${(piesa.km / 1000).toFixed(0)}k` },
+                  { label: "Stare", value: piesa.stare },
+                  { label: "Garanție", value: detalii.garantie },
+                ].map((s) => (
+                  <div
+                    key={s.label}
+                    className="bg-white/[0.04] rounded-xl p-3 border border-white/[0.07]"
+                  >
+                    <p className="text-[10px] uppercase tracking-widest text-white/30 mb-1">{s.label}</p>
+                    <p className="text-sm font-bold text-white">{s.value}</p>
+                  </div>
+                ))}
+              </div>
 
-        {/* Results count */}
-        <p className="text-sm text-white/30 mt-3 pl-1">
-          {pieseVizibile.length}{" "}
-          {pieseVizibile.length === 1 ? "piesă găsită" : "piese găsite"}
-          {filtru !== "Toate" && (
-            <span className="text-[#e2b96f]"> pentru modelul {filtru}</span>
-          )}
-        </p>
-      </section>
-
-      {/* Cards Grid */}
-      <section className="max-w-6xl mx-auto px-4 pb-20">
-        {pieseVizibile.length === 0 ? (
-          <div className="text-center py-24 text-white/30">
-            <p className="text-4xl mb-4">○</p>
-            <p className="text-lg font-semibold">Nicio piesă disponibilă</p>
-            <p className="text-sm mt-1">
-              Încearcă un alt filtru sau revin-o mai târziu.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {pieseVizibile.map((piesa) => (
-              <article
-                key={piesa.id}
-                className="group flex flex-col rounded-2xl border border-white/10 bg-white/[0.03] hover:border-[#e2b96f]/40 hover:bg-white/[0.06] transition-all duration-300 overflow-hidden"
+              {/* CTA WhatsApp */}
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-3 w-full py-4 rounded-xl bg-[#25D366] hover:bg-[#20bd59] active:scale-[0.98] transition-all font-bold text-base text-white shadow-lg shadow-[#25D366]/20"
               >
-                {/* Image */}
-                <div className="relative overflow-hidden">
-                  <img
-                    src={piesa.imagine_placeholder}
-                    alt={piesa.nume}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  {/* Model badge */}
-                  <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-[#0d0d14]/80 backdrop-blur-sm text-[#e2b96f] text-xs font-black tracking-widest border border-[#e2b96f]/30">
-                    {piesa.model_bmw}
-                  </span>
-                </div>
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                </svg>
+                Contactează pe WhatsApp
+              </a>
 
-                {/* Content */}
-                <div className="flex flex-col flex-1 p-5">
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <h2 className="text-base font-bold text-white leading-snug">
-                      {piesa.nume}
-                    </h2>
-                    <span
-                      className={`shrink-0 px-2.5 py-1 rounded-md text-xs font-semibold ${
-                        stareColor[piesa.stare] ??
-                        "bg-white/10 text-white/60 border border-white/20"
-                      }`}
-                    >
-                      {piesa.stare}
-                    </span>
+              {/* Telefon alternativ */}
+              <a
+                href={`tel:${WHATSAPP_NR}`}
+                className="flex items-center justify-center gap-2 w-full py-3 mt-3 rounded-xl border border-white/15 text-sm text-white/60 hover:text-white hover:border-white/30 transition-all"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.948V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 7V5z" />
+                </svg>
+                +373 69 38 09 37
+              </a>
+
+              <div className="mt-6 pt-5 border-t border-white/[0.07] grid grid-cols-3 gap-2 text-center">
+                {[
+                  { icon: "✓", text: "Piesă verificată" },
+                  { icon: "↩", text: "Garanție inclusă" },
+                  { icon: "⚡", text: "Livrare rapidă" },
+                ].map((b) => (
+                  <div key={b.text} className="flex flex-col items-center gap-1.5">
+                    <span className="text-[#e2b96f] text-sm font-black">{b.icon}</span>
+                    <span className="text-[10px] text-white/35 leading-tight">{b.text}</span>
                   </div>
-
-                  <p className="text-sm text-white/50 leading-relaxed mb-4 flex-1">
-                    {piesa.descriere}
-                  </p>
-
-                  {/* Meta */}
-                  <div className="flex items-center gap-3 text-xs text-white/30 mb-4">
-                    <span className="flex items-center gap-1">
-                      <svg
-                        className="w-3 h-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13 10V3L4 14h7v7l9-11h-7z"
-                        />
-                      </svg>
-                      {piesa.km.toLocaleString("ro-RO")} km
-                    </span>
-                    <span>•</span>
-                    <span>Cod: {piesa.id.toUpperCase()}</span>
-                  </div>
-
-                  {/* Price + CTA */}
-                  <div className="flex items-center justify-between border-t border-white/10 pt-4">
-                    <div>
-                      <p className="text-xs text-white/30 mb-0.5">Preț</p>
-                      <p className="text-xl font-black text-[#e2b96f]">
-                        {piesa.pret.toLocaleString("ro-RO")} lei
-                      </p>
-                    </div>
-                    <button className="px-4 py-2 rounded-xl bg-[#e2b96f] text-[#0d0d14] text-sm font-bold hover:bg-[#f0cc84] active:scale-95 transition-all">
-                      Contactează
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-white/10 py-8">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="text-sm font-black text-[#e2b96f]">
-            BMW Dezmembrări Premium
-          </span>
-          <p className="text-xs text-white/30">
-            Piese verificate · Garanție inclusă · Livrare națională
-          </p>
+                ))}
+              </div>
+            </div>
+          </aside>
         </div>
-      </footer>
+      </div>
     </main>
   );
 }
