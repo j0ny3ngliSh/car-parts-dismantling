@@ -1,0 +1,52 @@
+[
+  {
+    "id": "bmw-001",
+    "nume": "Far LED Adaptiv",
+    "model_bmw": "G30",
+    "pret": 1850,
+    "descriere": "Far stânga LED adaptiv original BMW Seria 5 G30 (2017-2023). Stare excelentă, fără fisuri sau defecte. Include cablaj și modul de control.",
+    "imagine_placeholder": "https://placehold.co/400x260/1a1a2e/e2b96f?text=Far+LED+G30",
+    "stare": "Foarte bună",
+    "km": 62000
+  },
+  {
+    "id": "bmw-002",
+    "nume": "Motor Diesel N57",
+    "model_bmw": "F10",
+    "pret": 8500,
+    "descriere": "Motor complet N57D30A 3.0d 258CP extras din BMW Seria 5 F10 xDrive. 112.000 km reali, verificabili. Include toate anexele. Garanție 60 zile.",
+    "imagine_placeholder": "https://placehold.co/400x260/1a1a2e/e2b96f?text=Motor+N57+F10",
+    "stare": "Bună",
+    "km": 112000
+  },
+  {
+    "id": "bmw-003",
+    "nume": "Volan M-Sport cu padele",
+    "model_bmw": "F30",
+    "pret": 950,
+    "descriere": "Volan M-Sport original cu padele schimbător de viteze și butoane multifuncționale. Alcantara și piele fină. Potrivit pentru F30, F31, F34.",
+    "imagine_placeholder": "https://placehold.co/400x260/1a1a2e/e2b96f?text=Volan+M-Sport+F30",
+    "stare": "Excelentă",
+    "km": 45000
+  },
+  {
+    "id": "bmw-004",
+    "nume": "Cutie Automată ZF 8HP",
+    "model_bmw": "G01",
+    "pret": 4200,
+    "descriere": "Cutie de viteze automată ZF 8HP50 extrasă din BMW X3 G01 xDrive30d. Funcționează perfect, fără erori. Pregătită pentru instalare imediată.",
+    "imagine_placeholder": "https://placehold.co/400x260/1a1a2e/e2b96f?text=Cutie+ZF+8HP+G01",
+    "stare": "Bună",
+    "km": 89000
+  },
+  {
+    "id": "bmw-005",
+    "nume": "Hayon cu sticlă panoramică",
+    "model_bmw": "F11",
+    "pret": 1200,
+    "descriere": "Hayon complet BMW Seria 5 F11 Touring în culoarea Alpinweiß (A96). Fără lovituri sau rugină. Include motoare electrice, broască și cablaj.",
+    "imagine_placeholder": "https://placehold.co/400x260/1a1a2e/e2b96f?text=Hayon+F11+Touring",
+    "stare": "Bună",
+    "km": 134000
+  }
+]
