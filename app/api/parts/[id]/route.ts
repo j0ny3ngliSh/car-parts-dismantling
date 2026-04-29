@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
-import type { Piesa } from "@/lib/parts";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  const { id } = await params;
 
   const { data, error } = await supabaseAdmin
-    .from<Piesa>("parts")
+    .from("parts")
     .select("*")
     .eq("id", id)
     .single();
@@ -23,13 +22,13 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  const { id } = await params;
   const payload = await request.json();
 
   const { data, error } = await supabaseAdmin
-    .from<Piesa>("parts")
+    .from("parts")
     .update(payload)
     .eq("id", id)
     .select();
@@ -43,11 +42,11 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  const { id } = await params;
 
-  const { error } = await supabaseAdmin.from<Piesa>("parts").delete().eq("id", id);
+  const { error } = await supabaseAdmin.from("parts").delete().eq("id", id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

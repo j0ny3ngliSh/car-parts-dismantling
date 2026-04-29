@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
-// import type { Piesa } from "@/lib/parts";
 
 export async function GET() {
   const { data, error } = await supabaseAdmin
-    // .from<Piesa>("parts")
     .from("parts")
     .select("*")
     .order("bmw_model", { ascending: true })
@@ -21,7 +19,7 @@ export async function POST(request: Request) {
   const payload = await request.json();
 
   const { data, error } = await supabaseAdmin
-    .from<Piesa>("parts")
+    .from("parts")
     .insert(payload)
     .select();
 
