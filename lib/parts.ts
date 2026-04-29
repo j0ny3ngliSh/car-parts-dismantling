@@ -144,18 +144,21 @@ export const samplePiese: Piesa[] = [
 ];
 
 export async function fetchPiese(): Promise<Piesa[]> {
-  const { data, error } = await supabaseAdmin.from<Piesa>("parts").select("*");
+  const { data, error } = await supabaseAdmin
+    .from("parts")
+    .select("*");
+
   if (error) {
     console.warn("Supabase fetchPiese failed:", error.message);
     return samplePiese;
   }
 
-  return data ?? samplePiese;
+  return (data as Piesa[]) ?? samplePiese;
 }
 
 export async function getPiesaById(id: string): Promise<Piesa | undefined> {
   const { data, error } = await supabaseAdmin
-    .from<Piesa>("parts")
+    .from("parts")
     .select("*")
     .eq("id", id)
     .single();
