@@ -102,7 +102,7 @@ export default function Page() {
             href="tel:+37369380937"
             className="text-sm text-[#e2b96f] font-medium hover:underline"
           >
-            069 38 09 37
+            +373 69 38 09 37
           </a>
         </div>
       </header>
