@@ -21,8 +21,10 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
-  const piesa = await getPiesaById(params.id);
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const piesa = await getPiesaById(id);
+  
   if (!piesa) return { title: "Piesă negăsită" };
 
   return {
@@ -31,8 +33,10 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
   };
 }
 
-export default async function PiesaPage({ params }: { params: { id: string } }) {
-  const piesa = await getPiesaById(params.id);
+export default async function PiesaPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const piesa = await getPiesaById(id);
+
   if (!piesa) notFound();
 
   const { details } = piesa;

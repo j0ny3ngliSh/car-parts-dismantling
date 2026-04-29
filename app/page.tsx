@@ -32,17 +32,17 @@ export default function Page() {
   }, []);
 
   const modele = useMemo(
-    () => ["Toate", ...Array.from(new Set(piese.map((p) => p.model_bmw)))],
+    () => ["Toate", ...Array.from(new Set(piese.map((p) => p.bmw_model)))],
     [piese]
   );
 
   const pieseVizibile = useMemo(
     () =>
       piese
-        .filter((p) => filtru === "Toate" || p.model_bmw === filtru)
+        .filter((p) => filtru === "Toate" || p.bmw_model === filtru)
         .sort((a, b) => {
-          if (sortare === "pret-asc") return a.pret - b.pret;
-          if (sortare === "pret-desc") return b.pret - a.pret;
+          if (sortare === "price-asc") return a.price - b.price;
+          if (sortare === "price-desc") return b.price - a.price;
           return 0;
         }),
     [filtru, sortare, piese]
@@ -108,8 +108,8 @@ export default function Page() {
               className="bg-white/5 border border-white/15 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#e2b96f]/60 appearance-none cursor-pointer"
             >
               <option value="default">Implicit</option>
-              <option value="pret-asc">Preț crescător</option>
-              <option value="pret-desc">Preț descrescător</option>
+              <option value="price-asc">Preț crescător</option>
+              <option value="price-desc">Preț descrescător</option>
             </select>
           </div>
         </div>
