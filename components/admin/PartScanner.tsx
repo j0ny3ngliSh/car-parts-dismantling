@@ -100,46 +100,56 @@ export default function PartScanner({ onPartIdentified }: PartScannerProps) {
   };
 
   const startScanner = async () => {
-    if (scanning) {
-      await stopScanner();
-      return;
+  if (scanning) {
+    await stopScanner();
+    return;
+  }
+
+  setMessage(null);
+  setScanning(true);
+
+  setTimeout(async () => {
+    try {
+      const html5QrCode = new Html5Qrcode(scannerId, {
+        // We move formats here to be sure they are registered
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.QR_CODE,
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+        ],
+        verbose: false
+      });
+      
+      scannerRef.current = html5QrCode;
+
+      await html5QrCode.start(
+        { 
+          facingMode: "environment" 
+        },
+        {
+          fps: 15,
+          // A wider qrbox is much better for long BMW barcodes
+          qrbox: { width: 300, height: 150 },
+          // Force a lower resolution for faster processing on high-end iPhones
+          videoConstraints: {
+            width: { min: 640, ideal: 1280, max: 1920 },
+            height: { min: 480, ideal: 720, max: 1080 },
+          }
+        },
+        handleScanSuccess,
+        handleScanFailure
+      );
+    } catch (error) {
+      console.error("Camera start error:", error);
+      setMessage(error instanceof Error ? error.message : "Camera access denied.");
+      setScanning(false);
+      scannerRef.current = null;
     }
-
-    setMessage(null);
-    setScanning(true);
-
-    // IMPORTANT: Wait for React to mount the div in the DOM before initializing
-    setTimeout(async () => {
-      try {
-        const html5QrCode = new Html5Qrcode(scannerId, {
-          formatsToSupport: [
-            Html5QrcodeSupportedFormats.QR_CODE,
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.CODE_128,
-          ],
-          verbose: false
-        });
-        
-        scannerRef.current = html5QrCode;
-
-        await html5QrCode.start(
-          { facingMode: "environment" },
-          {
-            fps: 10,
-            // iOS Safari handles object dimensions better than a single number
-            qrbox: { width: 250, height: 250 },
-          },
-          handleScanSuccess,
-          handleScanFailure
-        );
-      } catch (error) {
-        console.error("Camera start error:", error);
-        setMessage(error instanceof Error ? error.message : "Camera access denied.");
-        setScanning(false);
-        scannerRef.current = null;
-      }
-    }, 150); // Small delay to ensure DOM is ready
-  };
+  }, 200);
+};
 
   const handleClose = async () => {
     await stopScanner();
