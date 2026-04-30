@@ -108,39 +108,27 @@ export default function PartScanner({ onPartIdentified }: PartScannerProps) {
     setMessage(null);
     setScanning(true);
 
-    // Using a delay to ensure the DOM element is rendered before library attachment
     setTimeout(async () => {
       try {
-        const html5QrCode = new Html5Qrcode(scannerId, {
-          formatsToSupport: [
-            Html5QrcodeSupportedFormats.QR_CODE,
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39,
-          ],
-          verbose: false
-        });
-        
+        const html5QrCode = new Html5Qrcode(scannerId);
         scannerRef.current = html5QrCode;
 
-        // Explicitly defining the environment camera and aspect ratio for iOS stability
         await html5QrCode.start(
           { facingMode: "environment" },
           {
-            fps: 10,
-            qrbox: { width: 280, height: 160 },
-            aspectRatio: 1.0 // Square aspect ratio often centers better in containers
+            fps: 15,
+            // SCOATEM qrbox de tot. Va scana pe tot ecranul disponibil.
+            // Asta elimină orice eroare de calcul a dreptunghiului.
           },
           handleScanSuccess,
           handleScanFailure
         );
       } catch (error) {
-        console.error("Camera start error:", error);
-        setMessage(error instanceof Error ? error.message : "Camera access denied.");
+        console.error("Scanner error:", error);
         setScanning(false);
-        scannerRef.current = null;
+        setMessage("Camera access error.");
       }
-    }, 250);
+    }, 200);
   };
 
   const handleClose = async () => {
