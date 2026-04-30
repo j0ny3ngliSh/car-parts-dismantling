@@ -136,7 +136,21 @@ export default function PartScanner({ onPartIdentified }: PartScannerProps) {
     setMessage(null);
     setScanning(true);
 
-    const html5QrCode = new Html5Qrcode(scannerId);
+    // FIX: Pass supported formats here, during initialization
+    const html5QrCode = new Html5Qrcode(scannerId, {
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.QR_CODE,
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.CODABAR,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+      ],
+      verbose: false
+    });
+    
     scannerRef.current = html5QrCode;
 
     try {
@@ -145,16 +159,7 @@ export default function PartScanner({ onPartIdentified }: PartScannerProps) {
         {
           fps: 10,
           qrbox: 250,
-          formatsToSupport: [
-            Html5QrcodeSupportedFormats.QR_CODE,
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.EAN_8,
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39,
-            Html5QrcodeSupportedFormats.CODABAR,
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.UPC_E,
-          ],
+          // formatsToSupport was removed from here
         },
         handleScanSuccess,
         handleScanFailure
