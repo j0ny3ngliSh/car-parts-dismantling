@@ -1,83 +1,49 @@
-import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { NextResponse } from "next/server";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = "gemini-1.5-flash";
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-type IdentifyPartRequest = {
-  code: string;
-};
-
-type IdentifyPartResponse = {
-  name: string;
-  bmw_model: string;
-  category: string;
-  oem_code: string;
-  description: string;
-  compatible_with: string[];
-};
-
-export async function POST(request: Request) {
-  if (!GEMINI_API_KEY) {
-    return NextResponse.json(
-      { error: "Missing GEMINI_API_KEY environment variable." },
-      { status: 500 }
-    );
-  }
-
-  let body: IdentifyPartRequest;
+export async function POST(req: Request) {
   try {
-    body = await request.json();
-  } catch (error) {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
-  }
+    const { image } = await req.json();
 
-  if (!body?.code || typeof body.code !== "string") {
-    return NextResponse.json({ error: "Missing or invalid 'code' field." }, { status: 400 });
-  }
-
-  const code = body.code.trim();
-  const prompt = `Ești un expert în piese BMW. Identifică piesa după codul [cod]. Returnează un obiect JSON cu: name, bmw_model, category, oem_code, description, compatible_with (array). Dacă nu ești sigur, fă cea mai bună presupunere bazată pe formatul codurilor BMW. Returnează DOAR codul JSON, fără formatare markdown. Cod scanat: ${code}`;
-
-  try {
-    const ai = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = ai.getGenerativeModel({
-      model: GEMINI_MODEL,
-      generationConfig: {
-        temperature: 0,
-        maxOutputTokens: 300,
-        responseMimeType: "application/json",
-      },
-    });
-
-    const result = await model.generateContent(prompt);
-    const text = result.response?.text?.();
-
-    if (!text || typeof text !== "string") {
-      return NextResponse.json({ error: "Gemini response missing text." }, { status: 500 });
+    if (!image) {
+      return NextResponse.json({ error: "Nu a fost primită nicio imagine." }, { status: 400 });
     }
 
-    let parsed: IdentifyPartResponse;
-    try {
-      parsed = JSON.parse(text);
-    } catch (error) {
-      return NextResponse.json(
-        {
-          error: "Failed to parse Gemini response as JSON.",
-          raw: text,
-        },
-        { status: 500 }
-      );
-    }
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    return NextResponse.json(parsed);
-  } catch (error) {
-    return NextResponse.json(
+    const prompt = `Identify this BMW part from the label in the image. 
+    Extract the following information and return it ONLY as a valid JSON object:
+    {
+      "name": "Part name",
+      "bmw_model": "Compatible BMW model",
+      "category": "Part category",
+      "oem_code": "The numeric OEM part number",
+      "description": "Short description",
+      "compatible_with": ["model1", "model2"]
+    }
+    If you cannot find the info, make a best guess based on the part's appearance.`;
+
+    const result = await model.generateContent([
+      prompt,
       {
-        error: "Failed to call Gemini.",
-        details: error instanceof Error ? error.message : String(error),
+        inlineData: {
+          data: image,
+          mimeType: "image/jpeg",
+        },
       },
-      { status: 500 }
-    );
+    ]);
+
+    const response = await result.response;
+    const text = response.text();
+    
+    const cleanJson = text.replace(/```json|```/g, "").trim();
+    const partData = JSON.parse(cleanJson);
+
+    return NextResponse.json(partData);
+  } catch (error) {
+    console.error("Gemini Error:", error);
+    return NextResponse.json({ error: "Eroare la procesarea imaginii." }, { status: 500 });
   }
 }
