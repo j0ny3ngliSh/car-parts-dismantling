@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import PartScanner from "@/components/admin/PartScanner";
 import type { Piesa } from "@/lib/parts";
 
 const initialFormState: Piesa = {
@@ -63,6 +64,26 @@ export default function NewPiesaPage() {
       details: {
         ...current.details,
         [key]: value,
+      },
+    }));
+  };
+
+  const handleIdentifiedPart = (part: {
+    name: string;
+    bmw_model: string;
+    description: string;
+    category: string;
+    oem_code: string;
+  }) => {
+    setForm((current) => ({
+      ...current,
+      name: part.name || current.name,
+      bmw_model: part.bmw_model || current.bmw_model,
+      description: part.description || current.description,
+      details: {
+        ...current.details,
+        category: part.category || current.details.category,
+        oem_code: part.oem_code || current.details.oem_code,
       },
     }));
   };
@@ -142,13 +163,18 @@ export default function NewPiesaPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm text-white/70">
             Nume piesă
-            <input
-              type="text"
-              value={form.name}
-              onChange={(event) => handleChange("name", event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-[#0d0d14] px-4 py-3 text-white outline-none focus:border-[#e2b96f]"
-              required
-            />
+            <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <input
+                type="text"
+                value={form.name}
+                onChange={(event) => handleChange("name", event.target.value)}
+                className="flex-1 rounded-2xl border border-white/10 bg-[#0d0d14] px-4 py-3 text-white outline-none focus:border-[#e2b96f]"
+                required
+              />
+              <div className="sm:w-auto">
+                <PartScanner onPartIdentified={handleIdentifiedPart} />
+              </div>
+            </div>
           </label>
           <label className="block text-sm text-white/70">
             Preț (lei)
