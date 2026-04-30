@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
 
+/**
+ * Expected shape of the AI identification response
+ */
 type IdentifyPartResponse = {
   name: string;
   bmw_model: string;
@@ -17,44 +20,62 @@ type PartScannerProps = {
 };
 
 export default function PartScanner({ onPartIdentified }: PartScannerProps) {
+  // Generate a unique ID for the scanner container to avoid DOM conflicts
   const scannerId = useMemo(
     () => `html5qr-code-region-${Math.random().toString(36).slice(2)}`,
     []
   );
+  
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [scanning, setScanning] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [lastCode, setLastCode] = useState<string>("");
 
+  // Component cleanup on unmount
   useEffect(() => {
     return () => {
       if (scannerRef.current) {
+        // .stop() is asynchronous and returns a Promise
         scannerRef.current.stop().catch(() => undefined);
-        scannerRef.current.clear().catch(() => undefined);
+        
+        // .clear() is synchronous (void), so calling .catch() on it causes build errors
+        try {
+          scannerRef.current.clear();
+        } catch (e) {
+          // Ignore sync cleanup errors
+        }
         scannerRef.current = null;
       }
     };
   }, []);
 
+  /**
+   * Stops the camera and clears the scanner instance
+   */
   const stopScanner = async () => {
-  if (scannerRef.current) {
-    try {
-      if (scannerRef.current.isScanning) {
-        await scannerRef.current.stop();
+    if (scannerRef.current) {
+      try {
+        // Check if scanner is actually active before attempting to stop
+        if (scannerRef.current.isScanning) {
+          await scannerRef.current.stop();
+        }
+        // Sync cleanup of the DOM elements
+        scannerRef.current.clear();
+      } catch (error) {
+        console.warn("Scanner stop warning:", error);
+      } finally {
+        scannerRef.current = null;
+        setScanning(false);
       }
-      scannerRef.current.clear();
-    } catch (error) {
-      console.warn("Eroare la oprirea scannerului:", error);
-    } finally {
-      scannerRef.current = null;
+    } else {
       setScanning(false);
     }
-  } else {
-    setScanning(false);
-  }
-};
+  };
 
+  /**
+   * Triggered when a barcode/QR is successfully detected
+   */
   const handleScanSuccess = async (decodedText: string) => {
     if (!decodedText) return;
 
@@ -73,7 +94,7 @@ export default function PartScanner({ onPartIdentified }: PartScannerProps) {
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
         setMessage(
-          errorData?.error || "Eroare la identificarea codului."
+          errorData?.error || "Error identifying the part code."
         );
         return;
       }
@@ -84,13 +105,14 @@ export default function PartScanner({ onPartIdentified }: PartScannerProps) {
         return;
       }
 
+      // Update the parent form with identified data
       onPartIdentified(data);
-      setMessage("Cod identificat și câmpurile au fost actualizate.");
+      setMessage("Code identified and fields updated successfully.");
     } catch (error) {
       setMessage(
         error instanceof Error
           ? error.message
-          : "Eroare de rețea la identificarea codului."
+          : "Network error during part identification."
       );
     } finally {
       setLoading(false);
@@ -98,10 +120,13 @@ export default function PartScanner({ onPartIdentified }: PartScannerProps) {
   };
 
   const handleScanFailure = (errorMessage: string) => {
-    // Ignore repeated decode failures, keep scanning.
+    // Keep scanning and ignore routine decode failures
     console.debug("Scan failure:", errorMessage);
   };
 
+  /**
+   * Initializes and starts the camera stream
+   */
   const startScanner = async () => {
     if (scanning) {
       await stopScanner();
@@ -116,7 +141,7 @@ export default function PartScanner({ onPartIdentified }: PartScannerProps) {
 
     try {
       await html5QrCode.start(
-        { facingMode: "environment" },
+        { facingMode: "environment" }, // Prefer back camera
         {
           fps: 10,
           qrbox: 250,
@@ -138,7 +163,7 @@ export default function PartScanner({ onPartIdentified }: PartScannerProps) {
       setMessage(
         error instanceof Error
           ? error.message
-          : "Camera nu poate fi accesată."
+          : "Camera access denied or unavailable."
       );
       setScanning(false);
       scannerRef.current = null;
@@ -161,7 +186,7 @@ export default function PartScanner({ onPartIdentified }: PartScannerProps) {
           disabled={loading}
           className="inline-flex items-center justify-center rounded-2xl bg-[#e2b96f] px-4 py-3 text-sm font-semibold text-[#0d0d14] transition hover:bg-[#d0a15c] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {scanning ? "Oprește scanarea" : "Scanează Cod"}
+          {scanning ? "Stop Scanning" : "Scan Code"}
         </button>
         {(scanning || loading || message) && (
           <button
@@ -170,25 +195,25 @@ export default function PartScanner({ onPartIdentified }: PartScannerProps) {
             disabled={loading}
             className="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-sm font-semibold text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Închide
+            Close
           </button>
         )}
         {loading ? (
           <span className="inline-flex items-center gap-2 text-sm text-white/80">
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-            AI-ul identifică piesa...
+            AI identifying part...
           </span>
         ) : null}
       </div>
 
       {message ? (
-        <p className={`text-sm ${message.includes("Eroare") || message.includes("error") ? "text-rose-300" : "text-emerald-300"}`}>
+        <p className={`text-sm ${message.includes("Error") || message.includes("denied") ? "text-rose-300" : "text-emerald-300"}`}>
           {message}
         </p>
       ) : null}
 
       {lastCode ? (
-        <p className="text-xs text-white/50">Ultimul cod scanat: {lastCode}</p>
+        <p className="text-xs text-white/50">Last scanned code: {lastCode}</p>
       ) : null}
 
       {scanning ? (
